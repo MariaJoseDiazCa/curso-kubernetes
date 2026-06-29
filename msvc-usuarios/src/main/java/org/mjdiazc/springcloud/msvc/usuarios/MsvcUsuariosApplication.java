@@ -1,4 +1,4 @@
-package org.mjdiazc.springcloud.msvc.usuarios.msvc_usuarios;
+package org.mjdiazc.springcloud.msvc.usuarios;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
