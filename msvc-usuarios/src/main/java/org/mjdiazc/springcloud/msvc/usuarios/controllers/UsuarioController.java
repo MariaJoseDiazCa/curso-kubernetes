@@ -1,14 +1,16 @@
 package org.mjdiazc.springcloud.msvc.usuarios.controllers;
 
+import jakarta.validation.Valid;
+import org.jspecify.annotations.NonNull;
 import org.mjdiazc.springcloud.msvc.usuarios.models.entity.Usuario;
 import org.mjdiazc.springcloud.msvc.usuarios.services.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 public class UsuarioController {
@@ -32,15 +34,34 @@ public class UsuarioController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Usuario guardar(@RequestBody Usuario usuario){
-        return service.guardar(usuario);
+    public ResponseEntity<?> guardar(@Valid @RequestBody Usuario usuario, BindingResult result){
+
+        if(result.hasErrors()){
+            return validar(result);
+        }
+
+        if(!usuario.getEmail().isEmpty() && service.existsByEmail(usuario.getEmail())){
+            return ResponseEntity.badRequest().body(Collections.singletonMap("mensaje", "Ya existe un usuario con ese correo electronico!"));
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.guardar(usuario));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> editar(@RequestBody Usuario usuario, @PathVariable Long id){
+    public ResponseEntity<?> editar(@Valid @RequestBody Usuario usuario,BindingResult result, @PathVariable Long id){
+       if(result.hasErrors()){
+           return validar(result);
+       }
         Optional <Usuario> o = service.porId(id);
         if(o.isPresent()) {
+
+
             Usuario usuarioDb = o.get();
+            if(!usuario.getEmail().equalsIgnoreCase(usuarioDb.getEmail()) && service.porEmail(usuario.getEmail()).isPresent()){
+                return ResponseEntity.badRequest()
+                        .body(Collections
+                                .singletonMap("mensaje", "Ya existe un usuario con ese correo electronico!"));
+            }
             usuarioDb.setNombre(usuario.getNombre());
             usuarioDb.setEmail(usuario.getEmail());
             usuarioDb.setPassword(usuario.getPassword());
@@ -57,5 +78,13 @@ public class UsuarioController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    private static @NonNull ResponseEntity<Map<String, String>> validar(BindingResult result) {
+        Map<String, String> errores = new HashMap<>();
+        result.getFieldErrors().forEach(err -> {
+            errores.put(err.getField(), "El campo " + err.getField() + " " + err.getDefaultMessage());
+        });
+        return ResponseEntity.badRequest().body(errores);
     }
 }
