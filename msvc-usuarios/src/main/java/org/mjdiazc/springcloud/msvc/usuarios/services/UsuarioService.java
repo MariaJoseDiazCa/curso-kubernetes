@@ -15,4 +15,5 @@ public interface UsuarioService {
     Optional<Usuario> porEmail(String email);
 
     boolean existsByEmail(String email);
+    List<Usuario> listarPorIds(Iterable<Long> ids);
 }
