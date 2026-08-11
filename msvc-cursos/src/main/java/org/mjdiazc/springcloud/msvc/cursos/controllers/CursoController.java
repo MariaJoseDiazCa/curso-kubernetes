@@ -62,7 +62,7 @@ public class CursoController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminar( @PathVariable Long id){
-        Optional<Curso> o = service.porId(id);
+        Optional<Curso> o = service.porIdConUsuarios(id);
         if(o.isPresent()){
             service.eliminar(o.get().getId());
             return ResponseEntity.noContent().build();
